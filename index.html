@@ -1,0 +1,1343 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Yoga Macht Stark – Usertest</title>
+<style>
+  :root {
+    --bg: #F2F2F0;
+    --card: #FFFFFF;
+    --ink: #1A1A1A;
+    --muted: #6B6B66;
+    --line: #DCDCD8;
+    --accent: #C4483A;       /* Korallenrot, dunkel genug für weiße Schrift */
+    --accent-soft: #FBE9E5;
+    --ok: #2F6B45;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hidden { display: none !important; }
+
+  /* ---------- Karten-Ansichten (Einwilligung, Fragen, Abschluss) ---------- */
+  .page { min-height: 100%; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px 48px; }
+  .card { width: 100%; max-width: 620px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px 28px 24px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+  .card h1 { font-size: 24px; line-height: 1.25; margin: 0 0 12px; letter-spacing: -.01em; }
+  .card h2 { font-size: 16px; margin: 24px 0 8px; }
+  .card p, .card li { font-size: 15px; line-height: 1.6; color: #33332F; }
+  .card p { margin: 0 0 12px; }
+  .card ul { margin: 0 0 12px; padding-left: 20px; }
+  .note { font-size: 13px !important; color: var(--muted) !important; }
+  .persona { background: var(--accent-soft); border-radius: 12px; padding: 14px 16px; margin: 8px 0 16px; }
+  .persona p { margin: 0; }
+  .todo { background: #FFF6D6; border: 1px dashed #C9A227; border-radius: 6px; padding: 0 4px; }
+
+  .field { margin: 18px 0; }
+  .field > label, .field > .q { display: block; font-size: 15px; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+  .field .hint { font-size: 13px; color: var(--muted); font-weight: 400; }
+  select, textarea {
+    width: 100%; font: inherit; font-size: 15px; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; background: #fff;
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  select:focus, textarea:focus, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .check { display: flex; gap: 12px; align-items: flex-start; margin: 12px 0; font-size: 15px; line-height: 1.5; }
+  .check input { width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0; accent-color: var(--accent); }
+
+  .scale { display: grid; grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr)); gap: 6px; }
+  .scale input { position: absolute; opacity: 0; pointer-events: none; }
+  .scale label {
+    display: flex; align-items: center; justify-content: center; min-height: 44px;
+    border: 1px solid var(--line); border-radius: 10px; font-weight: 600; cursor: pointer; background: #fff;
+  }
+  .scale input:checked + label { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .scale input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .scale-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; padding: 12px 22px; border-radius: 999px; border: 0;
+    font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    background: var(--accent); color: #fff;
+  }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+  .btn.small { min-height: 40px; padding: 8px 16px; font-size: 14px; }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+  .error { color: var(--accent); font-size: 14px; margin-top: 10px; min-height: 1em; }
+  .progress { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+
+  /* ---------- Test-Ansicht (Aufgabe + Prototyp) ---------- */
+  .run { height: 100%; display: grid; grid-template-columns: 340px 1fr; }
+  .taskbar { background: var(--card); border-right: 1px solid var(--line); padding: 28px 24px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+  .taskbar .eyebrow { margin: 0; }
+  .taskbar h2 { font-size: 18px; margin: 0; }
+  .taskbar .tasktext { font-size: 15px; line-height: 1.6; margin: 0; }
+  .taskbar .actions { margin-top: 4px; flex-direction: column; }
+  .taskbar .actions .btn { width: 100%; }
+  .toggle-task { display: none; }
+  .stage { position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
+  .phone-wrap { position: relative; }
+  #phone {
+    width: 390px; height: 844px; transform-origin: top left; position: absolute; left: 0; top: 0;
+    border-radius: 28px; overflow: hidden; background: #FAFAF9;
+    box-shadow: 0 0 0 10px #1A1A1A, 0 20px 50px rgba(0,0,0,.18);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1A1A1A;
+  }
+  #phone a { color: inherit; }
+  #phone .screen { display: none; width: 390px; height: 844px; }
+  #phone .screen.active { display: block; }
+  #phone .screen > div { border: 0 !important; }
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: rgba(26,26,26,.9); color: #fff; font-size: 13px; padding: 8px 14px; border-radius: 999px;
+    pointer-events: none; opacity: 0; transition: opacity .15s; white-space: nowrap; z-index: 5;
+  }
+  .toast.show { opacity: 1; }
+  .soft-hint { font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 10px; padding: 10px 12px; }
+
+  @media (max-width: 760px) {
+    .run { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .taskbar { border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 16px; gap: 8px; }
+    .taskbar h2 { font-size: 15px; }
+    .taskbar .tasktext { font-size: 14px; }
+    .taskbar.collapsed .tasktext, .taskbar.collapsed .soft-hint { display: none; }
+    .taskbar .actions { flex-direction: row; }
+    .taskbar .actions .btn { width: auto; flex: 1; min-height: 40px; font-size: 14px; padding: 8px 12px; }
+    .toggle-task { display: inline; background: none; border: 0; color: var(--accent); font: inherit; font-size: 13px; font-weight: 700; padding: 0; cursor: pointer; }
+    .stage { padding: 0; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    #phone { border-radius: 0; box-shadow: none; }
+    .card { padding: 22px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Karten-Ansicht -->
+<div id="page" class="page"><div id="card" class="card" role="main"></div></div>
+
+<!-- Test-Ansicht -->
+<div id="run" class="run hidden">
+  <aside id="taskbar" class="taskbar" aria-live="polite">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;">
+      <p class="eyebrow" id="task-eyebrow">Aufgabe</p>
+      <button class="toggle-task" id="toggle-task" type="button">Aufgabe ausblenden</button>
+    </div>
+    <h2 id="task-title"></h2>
+    <p class="tasktext" id="task-text"></p>
+    <div id="soft-hint" class="soft-hint hidden"></div>
+    <div class="actions">
+      <button class="btn" id="btn-done" type="button">Ich bin fertig</button>
+      <button class="btn ghost" id="btn-giveup" type="button">Ich komme nicht weiter</button>
+    </div>
+  </aside>
+  <main class="stage" id="stage">
+    <div class="phone-wrap" id="phone-wrap">
+      <div id="phone" aria-label="App-Prototyp">
+<section class="screen" data-screen="Main">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="background:#E3E3E0;border:1.5px dashed #B9B9B4;display:flex;align-items:center;justify-content:center;color:#9C9C96;font-size:11px;text-align:center;box-sizing:border-box; position:absolute;inset:0;">[ Foto: Frau in Yoga-Pose ]</div>
+  <div style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(250,250,249,0) 40%, #FAFAF9 92%);"></div>
+  <div style="position:relative;margin-top:auto;padding:28px 24px 40px;display:flex;flex-direction:column;gap:16px;">
+    <div>
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8C8C86;margin:0 0 6px;">Yoga Macht Stark</div>
+      <h1 style="font-size:25px;font-weight:600;line-height:1.22;margin:0 0 8px;">Stark. Zertifiziert.</h1>
+      <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0;">ZPP-Kurse für mehr Ruhe und Beweglichkeit — von der Krankenkasse erstattungsfähig.</p>
+    </div>
+    <a href="#" data-go="02-Fokus" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Kurs entdecken</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="02-Fokus">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:32px 22px 20px;">
+    <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8C8C86;margin:0 0 6px;">Yoga Macht Stark</div>
+    <h1 style="font-size:25px;font-weight:600;line-height:1.22;margin:0 0 8px;">Was brauchst du gerade am meisten?</h1>
+  </div>
+  <div style="padding:0 22px;display:flex;flex-direction:column;gap:12px;flex:1;">
+    
+    <div style="position:relative;border:2px solid #1A1A1A;border-radius:16px;overflow:hidden;background:#FAFAF9;">
+      <div style="background:#E3E3E0;border:1.5px dashed #B9B9B4;display:flex;align-items:center;justify-content:center;color:#9C9C96;font-size:11px;text-align:center;box-sizing:border-box; height:96px;position:relative;">[ Foto ]<span style="position:absolute;top:10px;left:10px;background:#FFFFFF;border:1px solid #1A1A1A;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700;">Meistgewählt</span><div style="position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:#1A1A1A;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;">✓</div></div>
+      <div style="padding:12px 14px 14px;">
+        <div style="font-size:16px;font-weight:700;margin-bottom:2px;">Weniger Stress</div>
+        <div style="font-size:10px;color:#8C8C86;margin-bottom:6px;">Stressbewältigung · Nervensystem</div>
+        <p style="font-size:12px;color:#5B5B57;line-height:1.5;margin:0;">8 Wochen Yoga für innere Ruhe, tiefere Entspannung und mehr Widerstandskraft.</p>
+      </div>
+    </div>
+    
+    
+    <div style="position:relative;border:1.5px solid #D6D6D3;border-radius:16px;overflow:hidden;background:#FAFAF9;">
+      <div style="background:#E3E3E0;border:1.5px dashed #B9B9B4;display:flex;align-items:center;justify-content:center;color:#9C9C96;font-size:11px;text-align:center;box-sizing:border-box; height:96px;position:relative;">[ Foto ]</div>
+      <div style="padding:12px 14px 14px;">
+        <div style="font-size:16px;font-weight:700;margin-bottom:2px;">Mehr Beweglichkeit</div>
+        <div style="font-size:10px;color:#8C8C86;margin-bottom:6px;">Beweglichkeit · Gelenkgesundheit</div>
+        <p style="font-size:12px;color:#5B5B57;line-height:1.5;margin:0;">8 Wochen Yoga für freiere Gelenke, bessere Haltung, mehr Leichtigkeit.</p>
+      </div>
+    </div>
+    
+  </div>
+  <div style="padding:16px 22px 24px;">
+    <a href="#" data-go="03-Kursseite" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Weiter</a>
+    
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="03-Kursseite">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="position:relative;height:230px;flex-shrink:0;">
+    <div style="background:#E3E3E0;border:1.5px dashed #B9B9B4;display:flex;align-items:center;justify-content:center;color:#9C9C96;font-size:11px;text-align:center;box-sizing:border-box; position:absolute;inset:0;">[ Hero-Foto Kurs ]</div>
+    <span style="position:absolute;top:14px;left:14px;background:#FFFFFF;border:1px solid #1A1A1A;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700;">ZPP-zertifiziert</span>
+    <div style="position:absolute;top:12px;right:14px;"><a href="#" data-go="12-Account" style="width:34px;height:34px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">☰</a></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:0 18px 14px;">
+      <div style="font-size:19px;font-weight:700;color:#1A1A1A;background:rgba(250,250,249,0.85);display:inline-block;padding:4px 8px;border-radius:6px;line-height:1.3;box-decoration-break:clone;-webkit-box-decoration-break:clone;">Anti-Stress: Der zertifizierte Online-Kurs</div>
+    </div>
+  </div>
+  <div style="padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;">
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0;">8 Wochen geführte Yoga-Praxis gegen chronischen Stress — wissenschaftlich fundiert, ZPP-zertifiziert.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:10px 12px;">
+      <div style="font-size:10px;color:#8C8C86;margin-bottom:2px;">Dauer</div>
+      <div style="font-size:12px;font-weight:600;">8 Wochen</div>
+    </div>
+      <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:10px 12px;">
+      <div style="font-size:10px;color:#8C8C86;margin-bottom:2px;">Einheiten</div>
+      <div style="font-size:12px;font-weight:600;">8 Videos</div>
+    </div>
+      <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:10px 12px;">
+      <div style="font-size:10px;color:#8C8C86;margin-bottom:2px;">Aufwand</div>
+      <div style="font-size:12px;font-weight:600;">45–60 Min/Wo.</div>
+    </div>
+      <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:10px 12px;">
+      <div style="font-size:10px;color:#8C8C86;margin-bottom:2px;">Niveau</div>
+      <div style="font-size:12px;font-weight:600;">Alle Levels</div>
+    </div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:12px;display:flex;align-items:center;gap:10px;">
+      <div style="width:38px;height:38px;border-radius:50%;background:#E3E3E0;flex-shrink:0;"></div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Lehrerin-Name</div>
+        <div style="font-size:11px;color:#8C8C86;">Ashtanga-Yogalehrerin</div>
+      </div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:16px;">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+        <span style="font-size:28px;font-weight:700;">149 €</span><span style="font-size:11px;color:#8C8C86;">Einmalzahlung</span>
+      </div>
+      <p style="font-size:11px;color:#5B5B57;margin:0 0 10px;">✓ Anteilig erstattungsfähig über deine Krankenkasse</p>
+      <div style="width:100%;box-sizing:border-box;background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:13px 14px;font-size:13px;color:#8C8C86; margin-bottom:8px;">Krankenkasse wählen …  ▾</div>
+      <div style="background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+        <div style="font-size:11px;margin-bottom:2px;">Erstattung bei TK: <b>120,00 €</b> · Eigenanteil: 29,00 €</div>
+        <div style="font-size:9px;color:#ABABA6;line-height:1.4;">Richtwert. Vor Kursbeginn bei Krankenkasse bestätigen.</div>
+      </div>
+      <a href="#" data-go="04-Screening" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Jetzt starten</a>
+    </div>
+    <p style="text-align:center;font-size:11px;color:#8C8C86;margin:0;">Lieber <u>Mobilität</u>-Kurs statt Anti-Stress?</p>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="04-Screening">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:30px 20px 14px;border-bottom:1px solid #D6D6D3;display:flex;align-items:center;gap:10px;">
+    <a href="#" data-go="03-Kursseite" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+    <div>
+      <div style="font-size:11px;color:#8C8C86; letter-spacing:.1em;text-transform:uppercase;">Schritt 1 von 3</div>
+      <h1 style="font-size:19px;font-weight:700;margin:2px 0 0;">Kurz-Screening</h1>
+    </div>
+  </div>
+  <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;">
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0;">Bitte beantworte diese Fragen ehrlich — sie helfen uns, deine Sicherheit zu gewährleisten.</p>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:12px;">
+      <p style="font-size:12px;font-weight:600;margin:0 0 8px;line-height:1.4;">Sind Sie schwanger oder in den ersten 3 Monaten nach der Geburt?</p>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1.5px solid #D6D6D3;border-radius:8px;padding:8px;font-size:12px;">Ja</div>
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1.5px solid #D6D6D3;border-radius:8px;padding:8px;font-size:12px;">Nein</div>
+      </div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:12px;">
+      <p style="font-size:12px;font-weight:600;margin:0 0 8px;line-height:1.4;">Haben Sie akute Verletzungen an Wirbelsäule, Gelenken oder Muskeln?</p>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1.5px solid #D6D6D3;border-radius:8px;padding:8px;font-size:12px;">Ja</div>
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1.5px solid #D6D6D3;border-radius:8px;padding:8px;font-size:12px;">Nein</div>
+      </div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:12px;">
+      <p style="font-size:12px;font-weight:600;margin:0 0 8px;line-height:1.4;">Besteht eine nicht behandelte Herzerkrankung?</p>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1.5px solid #D6D6D3;border-radius:8px;padding:8px;font-size:12px;">Ja</div>
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1.5px solid #D6D6D3;border-radius:8px;padding:8px;font-size:12px;">Nein</div>
+      </div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:12px;">
+      <p style="font-size:12px;font-weight:600;margin:0 0 8px;line-height:1.4;">Bereit, eigenverantwortlich teilzunehmen und bei Beschwerden zu pausieren?</p>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1.5px solid #D6D6D3;border-radius:8px;padding:8px;font-size:12px;">Ja</div>
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1.5px solid #D6D6D3;border-radius:8px;padding:8px;font-size:12px;">Nein</div>
+      </div>
+    </div>
+    <a href="#" data-go="05-Login" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Weiter</a>
+    
+    
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="04b-Alternative">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 26px;text-align:center;">
+    <div style="width:64px;height:64px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:18px;">!</div>
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 10px;">Dieser Kurs passt gerade nicht</h1>
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; max-width:270px;margin-bottom:18px;">Aufgrund deiner Antworten empfehlen wir vorher Rücksprache mit einer Ärztin oder einem Arzt.</p>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;width:100%;text-align:left;margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:700;margin:0 0 10px;">Mögliche nächste Schritte</div>
+      <div style="font-size:12px;color:#5B5B57;line-height:1.9;">• Ärztliche Abklärung einholen<br/>• Sanften Schnupperkurs ausprobieren<br/>• Kursleitung kontaktieren</div>
+    </div>
+    <a href="#" data-go="03-Kursseite" style="display:flex;align-items:center;justify-content:center;background:#FAFAF9;color:#1A1A1A;border:1.5px solid #1A1A1A;border-radius:999px;padding:14px;font-size:14px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Zurück zur Kursseite</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="05-Login">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:30px 20px 14px;border-bottom:1px solid #D6D6D3;display:flex;align-items:center;gap:10px;">
+    <a href="#" data-go="04-Screening" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+    <div>
+      <div style="font-size:11px;color:#8C8C86; letter-spacing:.1em;text-transform:uppercase;">Schritt 2 von 3</div>
+      <h1 style="font-size:19px;font-weight:700;margin:2px 0 0;">Anmelden</h1>
+    </div>
+  </div>
+  <div style="padding:20px 20px 24px;display:flex;flex-direction:column;gap:10px;">
+    <div style="display:flex;align-items:center;justify-content:center;background:#FAFAF9;color:#1A1A1A;border:1.5px solid #1A1A1A;border-radius:999px;padding:14px;font-size:14px;font-weight:600;width:100%;box-sizing:border-box;">G  Mit Google anmelden</div>
+    <div style="display:flex;align-items:center;justify-content:center;background:#FAFAF9;color:#1A1A1A;border:1.5px solid #1A1A1A;border-radius:999px;padding:14px;font-size:14px;font-weight:600;width:100%;box-sizing:border-box;">  Mit Apple anmelden</div>
+    <div style="display:flex;align-items:center;gap:10px;margin:6px 0;">
+      <div style="flex:1;height:1px;background:#D6D6D3;"></div><span style="font-size:11px;color:#8C8C86;">oder</span><div style="flex:1;height:1px;background:#D6D6D3;"></div>
+    </div>
+    <div style="width:100%;box-sizing:border-box;background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:13px 14px;font-size:13px;color:#8C8C86;">E-Mail-Adresse</div>
+    <div style="width:100%;box-sizing:border-box;background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:13px 14px;font-size:13px;color:#8C8C86;">Passwort</div>
+    <div style="margin-top:6px;"><a href="#" data-go="06-Zahlung" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Anmelden</a></div>
+    <p style="text-align:center;font-size:12px;color:#8C8C86;margin:6px 0 0;">Noch kein Konto? <u>Registrieren</u></p>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="06-Zahlung">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:30px 20px 14px;border-bottom:1px solid #D6D6D3;display:flex;align-items:center;gap:10px;">
+    <a href="#" data-go="05-Login" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+    <div style="flex:1;">
+      <div style="font-size:11px;color:#8C8C86; letter-spacing:.1em;text-transform:uppercase;">Schritt 3 von 3</div>
+      <h1 style="font-size:19px;font-weight:700;margin:2px 0 0;">Zahlung</h1>
+    </div>
+    <div style="font-size:11px;color:#8C8C86;">🔒 Stripe</div>
+  </div>
+  <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;">
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;">
+      <div style="font-size:13px;font-weight:700;margin:0 0 10px;">Bestellübersicht</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span>Anti-Stress: Online-Kurs</span><span>149,00 €</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:8px 0 0;"><span>Gesamtbetrag</span><span>149,00 €</span></div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:13px;font-weight:700;margin:0 0 10px; margin:0;">Kartendaten</div>
+      <div style="width:100%;box-sizing:border-box;background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:13px 14px;font-size:13px;color:#8C8C86;">Kartennummer</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="width:100%;box-sizing:border-box;background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:13px 14px;font-size:13px;color:#8C8C86;">MM/JJ</div><div style="width:100%;box-sizing:border-box;background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:13px 14px;font-size:13px;color:#8C8C86;">CVC</div>
+      </div>
+      <div style="width:100%;box-sizing:border-box;background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:13px 14px;font-size:13px;color:#8C8C86;">Name des Karteninhabers</div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;">
+      <div style="font-size:13px;font-weight:700;margin:0 0 10px;">Alternativ bezahlen</div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1px solid #D6D6D3;border-radius:10px;padding:10px;font-size:12px;">Apple Pay</div>
+        <div style="flex:1;text-align:center;background:#FAFAF9;border:1px solid #D6D6D3;border-radius:10px;padding:10px;font-size:12px;">SEPA</div>
+      </div>
+    </div>
+    <a href="#" data-go="07-Kursplan" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Jetzt bezahlen · 149,00 €</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="07-Kursplan">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:34px 22px 0;display:flex;flex-direction:column;align-items:center;text-align:center;">
+    <div style="width:64px;height:64px;border-radius:50%;background:#EFEFED;border:2px solid #1A1A1A;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">✓</div>
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 6px;">Zahlung erfolgreich!</h1>
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; max-width:260px;">Dein Kurs startet ab heute. Jede Einheit wird wöchentlich freigeschaltet.</p>
+  </div>
+  <div style="padding:20px 22px 0;flex:1;overflow-y:auto;">
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;margin-bottom:12px;">
+      <div style="font-size:11px;color:#8C8C86; text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Anti-Stress · Kursplan</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #D6D6D3;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:22px;height:22px;border-radius:50%;background:#1A1A1A;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
+        <span style="font-size:12px;">Ankommen &amp; Atemraum</span>
+      </div>
+      <span style="font-size:11px;color:#8C8C86;">Heute</span>
+    </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #D6D6D3;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:22px;height:22px;border-radius:50%;background:#E3E3E0;color:#8C8C86;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">2</div>
+        <span style="font-size:12px;">Schultern &amp; Nacken lösen</span>
+      </div>
+      <span style="font-size:11px;color:#8C8C86;">+1 Wo.</span>
+    </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #D6D6D3;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:22px;height:22px;border-radius:50%;background:#E3E3E0;color:#8C8C86;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">3</div>
+        <span style="font-size:12px;">Erdung durch den Boden</span>
+      </div>
+      <span style="font-size:11px;color:#8C8C86;">+2 Wo.</span>
+    </div>
+      <div style="text-align:center;padding:6px 0 0;font-size:11px;color:#ABABA6;">… 5 weitere Einheiten</div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span style="font-size:13px;">Erinnerung für neue Einheiten</span>
+      <div style="width:36px;height:20px;border-radius:999px;background:#D6D6D3;position:relative;"><div style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;"></div></div>
+    </div>
+  </div>
+  <div style="padding:16px 22px 24px;"><a href="#" data-go="08-KursEinheit" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Zur ersten Einheit</a></div>
+</div>
+</section>
+<section class="screen" data-screen="08-KursEinheit">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:30px 16px 12px;border-bottom:1px solid #D6D6D3;display:flex;align-items:center;gap:10px;">
+    <a href="#" data-go="07b-KursUebersicht" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+    <div>
+      <div style="font-size:11px;color:#8C8C86;">Einheit 1 von 8</div>
+      <div style="font-size:14px;font-weight:700;">Ankommen &amp; Atemraum</div>
+    </div>
+  </div>
+  <div style="flex:1;background:#1A1A1A;position:relative;display:flex;flex-direction:column;justify-content:space-between;">
+    <div style="text-align:right;padding:12px 16px 0;"><span style="background:rgba(255,255,255,0.15);color:#fff;border-radius:999px;padding:4px 10px;font-size:10px;">Einheit 1/8</span></div>
+    <div style="display:flex;align-items:center;justify-content:center;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">▐▐</div>
+    </div>
+    <div style="padding:0 16px 22px;">
+      <div style="height:3px;background:rgba(255,255,255,0.25);border-radius:99px;margin-bottom:8px;"><div style="height:100%;width:35%;background:#FAFAF9;border-radius:99px;"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;color:rgba(255,255,255,0.7);font-size:11px;">
+        <span>15:40 / 45:00</span>
+        <a href="#" data-go="07b-KursUebersicht" style="color:rgba(255,255,255,0.85);text-decoration:underline;">Abschließen</a>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="07b-KursUebersicht">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <header style="padding:30px 20px 14px;background:#EFEFED;border-bottom:1px solid #D6D6D3;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+      <div>
+        <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8C8C86;margin:0 0 6px; margin-bottom:2px;">Dein Kurs</div>
+        <h1 style="font-size:18px;font-weight:700;margin:0;">Anti-Stress Yoga</h1>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <a href="#" data-go="12c-Materialien" style="width:34px;height:34px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">▤</a>
+        <a href="#" data-go="12b-Kommunikation" style="width:34px;height:34px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">✉</a>
+        <a href="#" data-go="12-Account" style="width:34px;height:34px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">☰</a>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#8C8C86;margin-bottom:6px;">1 von 8 Einheiten · 12%</div>
+    <div style="height:4px;background:#D6D6D3;border-radius:99px;"><div style="height:100%;width:12%;background:#1A1A1A;border-radius:99px;"></div></div>
+  </header>
+  <div style="flex:1;overflow-y:auto;padding:14px 18px 24px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <a href="#" data-dead="1" style="text-decoration:none;color:#1A1A1A;background:#EFEFED;border:1px solid #D6D6D3;border-radius:12px;padding:10px;display:block;">
+      <div style="font-size:10px;opacity:.75;margin-bottom:4px;">✓ Fertig</div>
+      <div style="font-size:12px;font-weight:600;">1. Ankommen &amp; Atemraum</div>
+    </a>
+      <a href="#" data-go="08-KursEinheit" style="text-decoration:none;color:#fff;background:#1A1A1A;border:1px solid #D6D6D3;border-radius:12px;padding:10px;display:block;">
+      <div style="font-size:10px;opacity:.75;margin-bottom:4px;">▶ Offen</div>
+      <div style="font-size:12px;font-weight:600;">2. Schultern &amp; Nacken</div>
+    </a>
+      <a href="#" data-dead="1" style="text-decoration:none;color:#1A1A1A;background:#F4F4F2;border:1px solid #D6D6D3;border-radius:12px;padding:10px;display:block;">
+      <div style="font-size:10px;opacity:.75;margin-bottom:4px;">🔒 Gesperrt</div>
+      <div style="font-size:12px;font-weight:600;">3. Erdung durch Boden</div>
+    </a>
+      <a href="#" data-dead="1" style="text-decoration:none;color:#1A1A1A;background:#F4F4F2;border:1px solid #D6D6D3;border-radius:12px;padding:10px;display:block;">
+      <div style="font-size:10px;opacity:.75;margin-bottom:4px;">🔒 Gesperrt</div>
+      <div style="font-size:12px;font-weight:600;">4. Sanfte Rückenseq.</div>
+    </a>
+      <a href="#" data-dead="1" style="text-decoration:none;color:#1A1A1A;background:#F4F4F2;border:1px solid #D6D6D3;border-radius:12px;padding:10px;display:block;">
+      <div style="font-size:10px;opacity:.75;margin-bottom:4px;">🔒 Gesperrt</div>
+      <div style="font-size:12px;font-weight:600;">5. Stressantwort</div>
+    </a>
+      <a href="#" data-dead="1" style="text-decoration:none;color:#1A1A1A;background:#F4F4F2;border:1px solid #D6D6D3;border-radius:12px;padding:10px;display:block;">
+      <div style="font-size:10px;opacity:.75;margin-bottom:4px;">🔒 Gesperrt</div>
+      <div style="font-size:12px;font-weight:600;">6. Kraft &amp; Stabilität</div>
+    </a>
+      <a href="#" data-dead="1" style="text-decoration:none;color:#1A1A1A;background:#F4F4F2;border:1px solid #D6D6D3;border-radius:12px;padding:10px;display:block;">
+      <div style="font-size:10px;opacity:.75;margin-bottom:4px;">🔒 Gesperrt</div>
+      <div style="font-size:12px;font-weight:600;">7. Tiefenentspannung</div>
+    </a>
+      <a href="#" data-dead="1" style="text-decoration:none;color:#1A1A1A;background:#F4F4F2;border:1px solid #D6D6D3;border-radius:12px;padding:10px;display:block;">
+      <div style="font-size:10px;opacity:.75;margin-bottom:4px;">🔒 Gesperrt</div>
+      <div style="font-size:12px;font-weight:600;">8. Integration</div>
+    </a>
+    </div>
+    
+    
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="07c-Pruefung">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 26px;text-align:center;gap:22px;">
+    <div>
+      <div style="width:64px;height:64px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 16px;">◔</div>
+      <h1 style="font-size:20px;font-weight:700;margin:0 0 8px;">Vollständigkeit wird geprüft…</h1>
+      <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0;">8 von 8 Einheiten abgeschlossen</p>
+    </div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
+      <a href="#" data-go="09-Bescheinigung" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Zur Bescheinigung</a>
+      <a href="#" data-go="07d-Kursabbruch" style="display:flex;align-items:center;justify-content:center;background:#FAFAF9;color:#1A1A1A;border:1.5px solid #1A1A1A;border-radius:999px;padding:14px;font-size:14px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Einheiten fehlen</a>
+    </div>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="07d-Kursabbruch">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 26px;text-align:center;">
+    <div style="width:64px;height:64px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:18px;">⚠</div>
+    <h1 style="font-size:21px;font-weight:700;margin:0 0 10px;">Kurs nicht vollständig</h1>
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; max-width:270px;margin-bottom:16px;">Du hast nicht alle 8 Einheiten abgeschlossen. Für die Krankenkassen-Erstattung müssen alle 8 Einheiten abgeschlossen sein.</p>
+    <div style="background:#F4EFEF;border:1px solid #D6C9C9;border-radius:14px;padding:14px;width:100%;margin-bottom:20px;text-align:left;">
+      <div style="font-size:12px;font-weight:700;margin-bottom:4px;">Wichtiger Hinweis</div>
+      <div style="font-size:11px;color:#5B5B57;line-height:1.6;">Ohne vollständige Teilnahme keine Teilnahmebescheinigung. Die Erstattung entfällt.</div>
+    </div>
+    <a href="#" data-go="07b-KursUebersicht" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Zurück zum Kurs</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="09-Bescheinigung">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:34px 22px 0;display:flex;flex-direction:column;align-items:center;text-align:center;">
+    <div style="width:72px;height:72px;border-radius:50%;background:#EFEFED;border:2px solid #1A1A1A;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px;">✓</div>
+    <h1 style="font-size:23px;font-weight:700;margin:0 0 6px;">Glückwunsch! Kurs abgeschlossen.</h1>
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; max-width:270px;">Du hast alle 8 Einheiten abgeschlossen. Deine Teilnahmebescheinigung steht bereit.</p>
+  </div>
+  <div style="padding:18px 22px 0;flex:1;overflow-y:auto;">
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;margin:0 0 10px;">Dokumente herunterladen</div>
+      <div style="display:flex;align-items:center;gap:10px;background:#FAFAF9;border:1px solid #D6D6D3;border-radius:12px;padding:12px;margin-bottom:8px;">
+      <div style="width:34px;height:34px;border-radius:8px;background:#E3E3E0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;">▤</div>
+      <div style="flex:1;"><div style="font-size:12px;font-weight:600;">Teilnahmebescheinigung</div><div style="font-size:11px;color:#8C8C86;">PDF · ZPP-konform</div></div>
+      <div style="font-size:12px;">⬇</div>
+    </div>
+      <div style="display:flex;align-items:center;gap:10px;background:#FAFAF9;border:1px solid #D6D6D3;border-radius:12px;padding:12px;margin-bottom:8px;">
+      <div style="width:34px;height:34px;border-radius:8px;background:#E3E3E0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;">▤</div>
+      <div style="flex:1;"><div style="font-size:12px;font-weight:600;">Rechnung</div><div style="font-size:11px;color:#8C8C86;">PDF · für Krankenkasse</div></div>
+      <div style="font-size:12px;">⬇</div>
+    </div>
+    </div>
+    <div style="background:#F0F0EC;border:1px solid #D6D6D3;border-radius:12px;padding:14px;">
+      <div style="font-size:13px;font-weight:700;margin:0 0 10px;">So beantragst du die Erstattung</div>
+      <div style="font-size:11px;color:#5B5B57;line-height:1.9;">
+        1. Dokumente herunterladen<br/>2. Bei Krankenkasse einreichen<br/>3. Einreichung nicht über diese App<br/>4. Anteilig erstattungsfähig
+      </div>
+    </div>
+  </div>
+  <div style="padding:16px 22px 24px;"><a href="#" data-go="10-Debrief" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Weiter</a></div>
+</div>
+</section>
+<section class="screen" data-screen="10-Debrief">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:32px 22px 0;">
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 4px;">Dein Kurs in Zahlen</h1>
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; margin-bottom:18px;">Eine sachliche Bilanz — was du getan hast.</p>
+  </div>
+  <div style="padding:0 22px;flex:1;overflow-y:auto;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;">
+      <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:10px 6px;text-align:center;"><div style="font-size:16px;font-weight:700;">8 von 8</div><div style="font-size:9px;color:#8C8C86;">Einheiten</div></div><div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:10px 6px;text-align:center;"><div style="font-size:16px;font-weight:700;">360</div><div style="font-size:9px;color:#8C8C86;">Praxisminuten</div></div><div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:10px 6px;text-align:center;"><div style="font-size:16px;font-weight:700;">8</div><div style="font-size:9px;color:#8C8C86;">Wochen</div></div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px;">Deine Notizen</div>
+      <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:12px;"><div style="font-size:11px;color:#8C8C86; margin-bottom:4px;">Einheit 3</div><div style="font-size:12px;">„Spüre den Boden viel bewusster jetzt.“</div></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px;">Wie es weitergeht</div>
+      <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; overflow:hidden;padding:0;">
+        <a href="#" data-go="09-Bescheinigung" style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid #D6D6D3;text-decoration:none;color:#1A1A1A;">
+      <div><span style="font-size:12px;">Teilnahmebescheinigung liegt bereit</span></div><span style="font-size:12px;color:#ABABA6;">›</span>
+    </a>
+        <a href="#" data-go="11-MiniAboAngebot" style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid #D6D6D3;text-decoration:none;color:#1A1A1A;">
+      <div><span style="font-size:12px;">Deine Praxis läuft weiter (Mini-Abo)</span></div><span style="font-size:12px;color:#ABABA6;">›</span>
+    </a>
+        <a href="#" data-go="03-Kursseite" style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid #D6D6D3;text-decoration:none;color:#1A1A1A;">
+      <div><span style="font-size:12px;">Kurs 2: Mobilität entdecken (freigeschaltet)</span></div><span style="font-size:12px;color:#ABABA6;">›</span>
+    </a>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 22px 24px;"><a href="#" data-go="10b-AlumniEinwilligung" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Weiter</a></div>
+</div>
+</section>
+<section class="screen" data-screen="10b-AlumniEinwilligung">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:34px 22px 0;flex:1;overflow-y:auto;">
+    <div style="width:56px;height:56px;border-radius:50%;background:#EFEFED;border:2px solid #1A1A1A;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px;">✉</div>
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 12px;">Kontaktaufnahme durch Kursleitung</h1>
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; margin-bottom:20px;">Dürfen wir dich nach dem Kurs mit Tipps, Folgeangeboten und Forschungsergebnissen kontaktieren? Jederzeit im Account widerrufbar.</p>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;display:flex;gap:12px;margin-bottom:24px;">
+      <div style="width:20px;height:20px;border-radius:6px;border:2px solid #1A1A1A;background:#1A1A1A;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✓</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:3px;">Ich stimme zu</div>
+        <div style="font-size:11px;color:#8C8C86;line-height:1.5;">Yoga Macht Stark darf mich per E-Mail informieren. Abmeldung jederzeit möglich.</div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 22px 24px;display:flex;flex-direction:column;gap:8px;">
+    <a href="#" data-go="11-MiniAboAngebot" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Weiter</a>
+    <a href="#" data-go="11-MiniAboAngebot" style="display:flex;align-items:center;justify-content:center;color:#8C8C86;font-size:13px;padding:10px;text-decoration:none;box-sizing:border-box;">Überspringen</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="11-MiniAboAngebot">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="position:relative;height:180px;flex-shrink:0;">
+    <div style="background:#E3E3E0;border:1.5px dashed #B9B9B4;display:flex;align-items:center;justify-content:center;color:#9C9C96;font-size:11px;text-align:center;box-sizing:border-box; position:absolute;inset:0;">[ Foto: Meditative Pose ]</div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:0 20px 16px;background:linear-gradient(to top, rgba(250,250,249,0.9), rgba(250,250,249,0));">
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8C8C86;margin:0 0 6px;">Anti-Stress Mini-Abo</div>
+      <div style="font-size:22px;font-weight:700;">Du hast es geschafft. Bleib dran.</div>
+    </div>
+  </div>
+  <div style="padding:14px 20px 0;flex:1;overflow-y:auto;">
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; margin-bottom:14px;">Setze deine Anti-Stress-Praxis fort — mit kurzen Einheiten speziell für Absolvent:innen.</p>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;margin-bottom:12px;">
+      <div style="font-size:11px;color:#8C8C86; text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Was du bekommst</div>
+      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span style="color:#1A1A1A;">✓</span><span style="font-size:12px;color:#5B5B57;">Wöchentlich neue Anti-Stress-Einheiten (10–25 Min)</span></div>
+      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span style="color:#1A1A1A;">✓</span><span style="font-size:12px;color:#5B5B57;">Aufbau auf deinem Kurs-Wissen</span></div>
+      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span style="color:#1A1A1A;">✓</span><span style="font-size:12px;color:#5B5B57;">Zeit- und Schwerpunkt-Filter</span></div>
+      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span style="color:#1A1A1A;">✓</span><span style="font-size:12px;color:#5B5B57;">Jederzeit kündbar, keine Bindung</span></div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-size:11px;color:#8C8C86;">Absolvent:innen-Preis</div><div style="font-size:22px;font-weight:700;">9,90 €</div><div style="font-size:11px;color:#8C8C86;">Jederzeit kündbar</div></div>
+      <div style="background:#FAFAF9;border:1px solid #1A1A1A;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700;">Exklusiv</div>
+    </div>
+  </div>
+  <div style="padding:14px 20px 22px;display:flex;flex-direction:column;gap:8px;">
+    <a href="#" data-go="11b-MiniAboZahlung" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Jetzt abonnieren</a>
+    <a href="#" data-go="11f-Ende" style="display:flex;align-items:center;justify-content:center;color:#8C8C86;font-size:13px;padding:8px;text-decoration:none;box-sizing:border-box;">Später entscheiden</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="11b-MiniAboZahlung">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:30px 20px 14px;border-bottom:1px solid #D6D6D3;display:flex;align-items:center;gap:10px;">
+    <a href="#" data-go="11-MiniAboAngebot" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+    <div style="flex:1;"><h1 style="font-size:19px;font-weight:700;margin:0;">Zahlung</h1></div>
+    <div style="font-size:11px;color:#8C8C86;">🔒 Stripe</div>
+  </div>
+  <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;">
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;">
+      <div style="font-size:13px;font-weight:700;margin:0 0 10px;">Bestellübersicht</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span>Anti-Stress Mini-Abo</span><span>9,90 €</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:8px 0 0;"><span>Monatlich</span><span>9,90 €</span></div>
+      <p style="font-size:10px;color:#8C8C86;margin:6px 0 0;">Wird monatlich abgebucht · Jederzeit kündbar</p>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:13px;font-weight:700;margin:0 0 10px; margin:0;">Kartendaten (bereits hinterlegt)</div>
+      <div style="width:100%;box-sizing:border-box;background:#FFFFFF;border:1px solid #D6D6D3;border-radius:10px;padding:13px 14px;font-size:13px;color:#8C8C86;">•••• •••• •••• 4242</div>
+    </div>
+    <a href="#" data-go="11c-MiniAboBestaetigung" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Jetzt abonnieren · 9,90 €</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="11c-MiniAboBestaetigung">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 26px;text-align:center;">
+    <div style="width:76px;height:76px;border-radius:50%;background:#EFEFED;border:2px solid #1A1A1A;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:18px;">✓</div>
+    <h1 style="font-size:24px;font-weight:700;margin:0 0 10px;">Dein Anti-Stress-Mini-Abo ist aktiv!</h1>
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; max-width:270px;margin-bottom:20px;">9,90 €/Monat · Jederzeit kündbar. Du kannst sofort loslegen.</p>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;width:100%;text-align:left;margin-bottom:22px;">
+      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span style="color:#1A1A1A;">✓</span><span style="font-size:12px;color:#5B5B57;">Zugang zu allen Anti-Stress-Einheiten</span></div>
+      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span style="color:#1A1A1A;">✓</span><span style="font-size:12px;color:#5B5B57;">Wöchentlich neuer Content</span></div>
+      <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span style="color:#1A1A1A;">✓</span><span style="font-size:12px;color:#5B5B57;">Jederzeit kündbar</span></div>
+    </div>
+    <a href="#" data-go="11d-MiniAbo" style="display:flex;align-items:center;justify-content:center;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">Zur Anti-Stress-Strecke</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="11d-MiniAbo">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <header style="padding:30px 20px 14px;background:#EFEFED;border-bottom:1px solid #D6D6D3;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <a href="#" data-go="10-Debrief" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+      <div style="flex:1;">
+        <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8C8C86;margin:0 0 6px; margin-bottom:2px;">Mini-Abo aktiv</div>
+        <h1 style="font-size:17px;font-weight:700;margin:0;">Anti-Stress-Strecke</h1>
+      </div>
+      <a href="#" data-go="12b-Kommunikation" style="width:34px;height:34px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">✉</a>
+      <a href="#" data-go="12-Account" style="width:34px;height:34px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">☰</a>
+    </div>
+    <p style="font-size:11px;color:#8C8C86;margin:0;">Deine Praxis läuft weiter: 360 Praxisminuten</p>
+  </header>
+  <div style="flex:1;overflow-y:auto;padding:14px 18px 24px;display:flex;flex-direction:column;gap:10px;">
+    <a href="#" data-go="03-Kursseite" style="text-decoration:none;color:#1A1A1A;display:flex;align-items:center;gap:10px;background:#FAFAF9;border:1px solid #1A1A1A;border-radius:14px;padding:12px 14px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:#EFEFED;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📅</div>
+      <div style="flex:1;"><div style="font-size:10px;color:#8C8C86;">Kurs 2 · Jetzt verfügbar</div><div style="font-size:13px;font-weight:600;">Mobilität</div></div>
+      <span>›</span>
+    </a>
+    <div>
+      <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:6px;"><span style="background:#1A1A1A;color:#fff;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">Alle</span><span style="background:#FAFAF9;color:#1A1A1A;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">bis 15 Min</span><span style="background:#FAFAF9;color:#1A1A1A;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">15-20 Min</span><span style="background:#FAFAF9;color:#1A1A1A;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">20-30 Min</span></div>
+      <div style="display:flex;gap:6px;overflow-x:auto;"><span style="background:#1A1A1A;color:#fff;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">Alle</span><span style="background:#FAFAF9;color:#1A1A1A;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">Schultern &amp; Nacken</span><span style="background:#FAFAF9;color:#1A1A1A;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">Rücken</span><span style="background:#FAFAF9;color:#1A1A1A;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">Atmung</span><span style="background:#FAFAF9;color:#1A1A1A;border:1px solid #1A1A1A;border-radius:999px;padding:5px 11px;font-size:11px;white-space:nowrap;">Energie</span></div>
+      
+    </div>
+    <a href="#" data-go="11e-MiniAboPlayer" style="text-decoration:none;color:#1A1A1A;display:flex;gap:0;background:#FAFAF9;border:1px solid #D6D6D3;border-radius:14px;overflow:hidden;">
+      <div style="background:#E3E3E0;border:1.5px dashed #B9B9B4;display:flex;align-items:center;justify-content:center;color:#9C9C96;font-size:11px;text-align:center;box-sizing:border-box; width:90px;flex-shrink:0;">[img]</div>
+      <div style="flex:1;padding:10px 12px;">
+        <div style="display:flex;gap:6px;margin-bottom:4px;"><span style="font-size:11px;color:#8C8C86;">12 Min</span><span style="font-size:10px;background:#EFEFED;border-radius:99px;padding:0 6px;">Schultern &amp; Nacken</span></div>
+        <div style="font-size:13px;font-weight:600;">Schultern lösen am Schreibtisch</div>
+      </div>
+      <div style="display:flex;align-items:center;padding-right:14px;"><div style="width:30px;height:30px;border-radius:50%;background:#1A1A1A;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;">▶</div></div>
+    </a>
+    <a href="#" data-go="11e-MiniAboPlayer" style="text-decoration:none;color:#1A1A1A;display:flex;gap:0;background:#FAFAF9;border:1px solid #D6D6D3;border-radius:14px;overflow:hidden;">
+      <div style="background:#E3E3E0;border:1.5px dashed #B9B9B4;display:flex;align-items:center;justify-content:center;color:#9C9C96;font-size:11px;text-align:center;box-sizing:border-box; width:90px;flex-shrink:0;">[img]</div>
+      <div style="flex:1;padding:10px 12px;">
+        <div style="display:flex;gap:6px;margin-bottom:4px;"><span style="font-size:11px;color:#8C8C86;">18 Min</span><span style="font-size:10px;background:#EFEFED;border-radius:99px;padding:0 6px;">Atmung</span></div>
+        <div style="font-size:13px;font-weight:600;">Ruhiger Atem zum Feierabend</div>
+      </div>
+      <div style="display:flex;align-items:center;padding-right:14px;"><div style="width:30px;height:30px;border-radius:50%;background:#1A1A1A;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;">▶</div></div>
+    </a>
+    <a href="#" data-go="11e-MiniAboPlayer" style="text-decoration:none;color:#1A1A1A;display:flex;gap:0;background:#FAFAF9;border:1px solid #D6D6D3;border-radius:14px;overflow:hidden;">
+      <div style="background:#E3E3E0;border:1.5px dashed #B9B9B4;display:flex;align-items:center;justify-content:center;color:#9C9C96;font-size:11px;text-align:center;box-sizing:border-box; width:90px;flex-shrink:0;">[img]</div>
+      <div style="flex:1;padding:10px 12px;">
+        <div style="display:flex;gap:6px;margin-bottom:4px;"><span style="font-size:11px;color:#8C8C86;">10 Min</span><span style="font-size:10px;background:#EFEFED;border-radius:99px;padding:0 6px;">Energie</span></div>
+        <div style="font-size:13px;font-weight:600;">Kurzer Energie-Boost</div>
+      </div>
+      <div style="display:flex;align-items:center;padding-right:14px;"><div style="width:30px;height:30px;border-radius:50%;background:#1A1A1A;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;">▶</div></div>
+    </a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="11e-MiniAboPlayer">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:30px 16px 12px;background:#EFEFED;border-bottom:1px solid #D6D6D3;display:flex;align-items:center;gap:10px;">
+    <a href="#" data-go="11d-MiniAbo" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+    <div>
+      <div style="font-size:11px;color:#8C8C86;">Mini-Abo · 12 Min</div>
+      <div style="font-size:14px;font-weight:700;">Schultern lösen am Schreibtisch</div>
+    </div>
+  </div>
+  <div style="flex:1;background:#1A1A1A;position:relative;display:flex;flex-direction:column;justify-content:space-between;">
+    <div></div>
+    <div style="display:flex;align-items:center;justify-content:center;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">▐▐</div>
+    </div>
+    <div style="padding:0 16px 22px;">
+      <div style="height:3px;background:rgba(255,255,255,0.25);border-radius:99px;margin-bottom:8px;"><div style="height:100%;width:55%;background:#FAFAF9;border-radius:99px;"></div></div>
+      <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,0.7);font-size:11px;">
+        <span>6:36 / 12:00</span>
+        <a href="#" data-go="11d-MiniAbo" style="color:rgba(255,255,255,0.85);text-decoration:underline;">Fertig</a>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="11f-Ende">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 26px;text-align:center;">
+    <div style="width:64px;height:64px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;">✓</div>
+    <h1 style="font-size:24px;font-weight:700;margin:0 0 12px;">Alles Gute auf deinem Weg.</h1>
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; max-width:270px;margin-bottom:24px;">Danke, dass du den Kurs mit uns gemeistert hast. Wir wünschen dir viel Freude an deiner Praxis.</p>
+    <a href="#" data-go="09-Bescheinigung" style="display:flex;align-items:center;justify-content:center;background:#FAFAF9;color:#1A1A1A;border:1.5px solid #1A1A1A;border-radius:999px;padding:14px;font-size:14px;font-weight:600;width:100%;text-decoration:none;box-sizing:border-box;">⬇ Bescheinigung &amp; Erstattungsunterlagen</a>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="12-Account">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <div style="padding:30px 20px 14px;border-bottom:1px solid #D6D6D3;display:flex;align-items:center;gap:10px;">
+    <a href="#" data-go="11d-MiniAbo" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+    <h1 style="font-size:19px;font-weight:700;margin:0;">Mein Konto</h1>
+  </div>
+  <div style="padding:18px 20px 24px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;">
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;">
+      <div style="font-size:11px;color:#8C8C86; text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Zahlungsstatus</div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #D6D6D3;"><span style="font-size:12px;">Anti-Stress Online-Kurs</span><span style="font-size:10px;background:#E9F0E6;border:1px solid #1A1A1A;border-radius:99px;padding:2px 8px;">Bezahlt</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0 0;"><span style="font-size:12px;">Mobilität Online-Kurs</span><span style="font-size:11px;color:#8C8C86;">Noch nicht erworben</span></div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-size:11px;color:#8C8C86;">Kontakteinwilligung</div><div style="font-size:13px;font-weight:600;">Kontakt erlaubt: Ja</div></div>
+      <a href="#" data-go="10b-AlumniEinwilligung" style="text-decoration:none;color:#1A1A1A;border:1px solid #D6D6D3;border-radius:999px;padding:6px 14px;font-size:12px;">Ändern</a>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:0;overflow:hidden;">
+      <a href="#" data-go="11d-MiniAbo" style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid #D6D6D3;text-decoration:none;color:#1A1A1A;">
+      <div><span style="font-size:12px;">Anti-Stress-Strecke</span></div><span style="font-size:12px;color:#ABABA6;">›</span>
+    </a>
+      <a href="#" data-go="09-Bescheinigung" style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid #D6D6D3;text-decoration:none;color:#1A1A1A;">
+      <div><span style="font-size:12px;">Meine Bescheinigung</span></div><span style="font-size:12px;color:#ABABA6;">›</span>
+    </a>
+      <a href="#" data-go="03-Kursseite" style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid #D6D6D3;text-decoration:none;color:#1A1A1A;">
+      <div><span style="font-size:12px;">Kurs 2: Mobilität</span><div style="font-size:11px;color:#8C8C86;margin-top:2px;">Jetzt verfügbar</div></div><span style="font-size:12px;color:#ABABA6;">›</span>
+    </a>
+      <a href="#" data-go="12b-Kommunikation" style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid #D6D6D3;text-decoration:none;color:#1A1A1A;">
+      <div><span style="font-size:12px;">Nachrichten</span></div><span style="font-size:12px;color:#ABABA6;">›</span>
+    </a>
+    </div>
+    <div style="border:1px solid #D6C9C9;border-radius:14px;padding:14px;text-align:center;font-size:14px;color:#B24444;">Abmelden</div>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="12b-Kommunikation">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <header style="padding:30px 20px 14px;background:#EFEFED;border-bottom:1px solid #D6D6D3;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <a href="#" data-go="07b-KursUebersicht" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+      <h1 style="font-size:18px;font-weight:700;margin:0;">Nachrichten</h1>
+    </div>
+    <div style="background:#FAFAF9;border:1px solid #D6D6D3;border-radius:10px;padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="font-size:11px;color:#8C8C86;">ZPP-Kommunikationszeit</span><span style="font-weight:600;">8/24 Min.</span></div>
+      <div style="height:4px;background:#EFEFED;border-radius:99px;"><div style="height:100%;width:33%;background:#1A1A1A;border-radius:99px;"></div></div>
+    </div>
+  </header>
+  <div style="flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;">
+    <div style="align-self:flex-start;max-width:78%;background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:12px;">Willkommen im Kurs! Melde dich bei Fragen jederzeit.</div>
+    <div style="align-self:flex-end;max-width:78%;background:#1A1A1A;color:#fff;border-radius:14px 14px 4px 14px;padding:10px 12px;font-size:12px;">Danke! Ich habe eine Frage zu Einheit 3.</div>
+  </div>
+  <div style="padding:12px 16px 22px;background:#EFEFED;border-top:1px solid #D6D6D3;display:flex;gap:8px;">
+    <div style="flex:1;background:#FAFAF9;border:1px solid #D6D6D3;border-radius:12px;padding:10px 12px;font-size:12px;color:#8C8C86;">Nachricht schreiben…</div>
+    <div style="width:38px;height:38px;border-radius:50%;background:#D6D6D3;flex-shrink:0;"></div>
+  </div>
+</div>
+</section>
+<section class="screen" data-screen="12c-Materialien">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAFAF9; border: 1px solid #D6D6D3; overflow: hidden; position: relative; display: flex; flex-direction: column; color: #1A1A1A;">
+
+  <header style="padding:30px 20px 14px;background:#EFEFED;border-bottom:1px solid #D6D6D3;display:flex;align-items:center;gap:10px;">
+    <a href="#" data-go="07b-KursUebersicht" style="width:32px;height:32px;border-radius:50%;background:#EFEFED;border:1px solid #D6D6D3;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1A1A1A;flex-shrink:0;text-decoration:none;box-sizing:border-box;">‹</a>
+    <div><div style="font-size:11px;color:#8C8C86;">Anti-Stress</div><h1 style="font-size:18px;font-weight:700;margin:2px 0 0;">Materialien</h1></div>
+  </header>
+  <div style="flex:1;overflow-y:auto;padding:16px 20px 24px;display:flex;flex-direction:column;gap:10px;">
+    <p style="font-size:13px;color:#5B5B57;line-height:1.6;margin:0; margin-bottom:4px;">Wissenschaftlich fundierte Begleitmaterialien zum Kurs.</p>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;display:flex;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:#E3E3E0;flex-shrink:0;display:flex;align-items:center;justify-content:center;">▤</div>
+      <div><div style="font-size:13px;font-weight:600;">Atemtechniken-Leitfaden</div><div style="font-size:10px;background:#E9F0E6;border-radius:99px;padding:2px 7px;display:inline-block;margin:4px 0;">PDF</div><div style="font-size:11px;color:#8C8C86;">Stand: 2026</div></div>
+    </div>
+    <div style="background:#EFEFED;border:1px solid #D6D6D3;border-radius:14px;box-sizing:border-box; padding:14px;display:flex;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:#E3E3E0;flex-shrink:0;display:flex;align-items:center;justify-content:center;">▤</div>
+      <div><div style="font-size:13px;font-weight:600;">Studienlage Stressregulation</div><div style="font-size:10px;background:#E9F0E6;border-radius:99px;padding:2px 7px;display:inline-block;margin:4px 0;">Artikel</div><div style="font-size:11px;color:#8C8C86;">Stand: 2026</div></div>
+    </div>
+  </div>
+</div>
+</section>
+      </div>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status">Im Prototyp nicht aktiv</div>
+</div>
+
+<script>
+/* =====================================================================
+   KONFIGURATION – hier anpassen
+   ===================================================================== */
+const CONFIG = {
+  STUDY_ID: "yms-wireframe-usertest-v1",
+  // Web-App-URL des Google Apps Scripts (siehe apps-script.gs). Leer = Daten nur lokal + Download am Ende.
+  ENDPOINT: "",
+  EXPLORE_SOFT_LIMIT_SEC: 180,
+  CONTACT: "[KONTAKT-E-MAIL]"
+};
+
+const TASKS = [
+  {
+    id: "explore",
+    title: "Erster Eindruck",
+    text: "Schau dich in der App um, so wie du es tun würdest, wenn du sie gerade entdeckt hast. Es gibt nichts Bestimmtes zu erreichen. Klick auf „Ich bin fertig“, sobald du einen Eindruck hast (etwa 2–3 Minuten).",
+    start: "Main",
+    targets: [],
+    optimalClicks: null,
+    correctFirst: [],
+    followups: [
+      { id: "q_beschreibung", label: "Beschreib die App in einem Satz: Was ist das, und für wen ist sie gedacht?" },
+      { id: "q_naechster_schritt", label: "Was würdest du als Nächstes tun, wenn das eine echte App wäre?" }
+    ]
+  },
+  {
+    id: "nachricht",
+    title: "Kursleitung kontaktieren",
+    text: "Du bist in Woche 2 deines Anti-Stress-Kurses. Bei einer Übung hat dein Knie gezogen, und du möchtest die Kursleitung dazu etwas fragen. Finde heraus, wo du ihr eine Nachricht schreiben kannst.",
+    start: "07b-KursUebersicht",
+    targets: ["12b-Kommunikation"],
+    optimalClicks: 1,
+    correctFirst: ["12b-Kommunikation", "12-Account"],
+    followups: [
+      { id: "q_erwartung", label: "Hast du die Nachrichten dort erwartet, wo du sie gefunden hast? Wo hättest du zuerst gesucht?" }
+    ]
+  },
+  {
+    id: "miniabo",
+    title: "Nach dem Kurs weitermachen",
+    text: "Geschafft: Du hast alle 8 Einheiten abgeschlossen. Du möchtest auch danach regelmäßig mit der App üben. Finde ein passendes Angebot und schließ es ab. Keine Sorge, es wird nichts bezahlt.",
+    start: "10-Debrief",
+    targets: ["11c-MiniAboBestaetigung"],
+    optimalClicks: 3,
+    correctFirst: ["11-MiniAboAngebot", "10b-AlumniEinwilligung"],
+    followups: [
+      { id: "q_verstaendnis", label: "Was genau hast du gerade abgeschlossen? Beschreib es in deinen Worten (was du bekommst, was es kostet, wie du wieder rauskommst)." }
+    ]
+  },
+  {
+    id: "bescheinigung",
+    title: "Nachweis für die Krankenkasse",
+    text: "Zwei Wochen später: Deine Krankenkasse möchte einen Nachweis, dass du den Kurs vollständig gemacht hast. Finde dieses Dokument in der App.",
+    start: "11d-MiniAbo",
+    targets: ["09-Bescheinigung"],
+    optimalClicks: 2,
+    correctFirst: ["12-Account", "10-Debrief"],
+    followups: [
+      { id: "q_naechstes", label: "Was würdest du mit dem Dokument jetzt machen? War dir klar, wie es mit der Erstattung weitergeht?" }
+    ]
+  }
+];
+
+/* =====================================================================
+   Ab hier Logik – normalerweise nichts ändern
+   ===================================================================== */
+const params = new URLSearchParams(location.search);
+const MODERATED = params.get("mod") === "1";
+const DEBUG = params.get("debug") === "1";
+
+function randomId() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let s = "";
+  const buf = new Uint8Array(6);
+  (window.crypto || window.msCrypto).getRandomValues(buf);
+  buf.forEach(b => s += chars[b % chars.length]);
+  return "P-" + s;
+}
+function cleanPid(v) { return v ? v.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24) : ""; }
+
+const T0 = performance.now();
+const state = {
+  pid: cleanPid(params.get("pid")) || randomId(),
+  startedAt: new Date().toISOString(),
+  session: {},
+  tasks: [],
+  events: [],
+  taskIndex: -1,
+  current: null,        // laufende Aufgabe
+  screen: null,
+  sendFailed: false
+};
+
+function now() { return Math.round(performance.now() - T0); }
+function iso() { return new Date().toISOString(); }
+function deviceInfo() {
+  const w = window.innerWidth, h = window.innerHeight;
+  const ua = navigator.userAgent;
+  const browser = /Edg\//.test(ua) ? "Edge" : /Firefox\//.test(ua) ? "Firefox" : /Chrome\//.test(ua) ? "Chrome" : /Safari\//.test(ua) ? "Safari" : "Andere";
+  const os = /iPhone|iPad|iPod/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Mac OS X/.test(ua) ? "macOS" : /Windows/.test(ua) ? "Windows" : /Linux/.test(ua) ? "Linux" : "Andere";
+  return { device: w < 760 ? "mobil" : "desktop", viewport: w + "x" + h, browser, os };
+}
+
+/* ---------- Datensicherung & Versand ---------- */
+function backup() {
+  try { localStorage.setItem("yms-usertest-" + state.pid, JSON.stringify({ session: state.session, tasks: state.tasks, events: state.events })); } catch (e) {}
+}
+async function send(kind, rows) {
+  backup();
+  if (!CONFIG.ENDPOINT || CONFIG.ENDPOINT.indexOf("%%") === 0) { state.sendFailed = true; return false; }
+  try {
+    await fetch(CONFIG.ENDPOINT, {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ study: CONFIG.STUDY_ID, kind, rows })
+    });
+    return true;
+  } catch (e) { state.sendFailed = true; return false; }
+}
+function sessionRow(status) {
+  Object.assign(state.session, { pid: state.pid, status, started_at: state.startedAt, updated_at: iso(), moderated: MODERATED }, deviceInfo());
+  return Object.assign({}, state.session);
+}
+function download() {
+  const blob = new Blob([JSON.stringify({ study: CONFIG.STUDY_ID, session: state.session, tasks: state.tasks, events: state.events }, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "usertest_" + state.pid + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- Karten-Ansichten ---------- */
+const page = document.getElementById("page");
+const card = document.getElementById("card");
+const run = document.getElementById("run");
+function showCard(html) {
+  run.classList.add("hidden");
+  page.classList.remove("hidden");
+  card.innerHTML = html;
+  window.scrollTo(0, 0);
+  const h = card.querySelector("h1"); if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+}
+function scaleField(name, question, n, lowLabel, highLabel) {
+  let opts = "";
+  for (let i = 1; i <= n; i++) {
+    opts += `<input type="radio" name="${name}" id="${name}_${i}" value="${i}"><label for="${name}_${i}">${i}</label>`;
+  }
+  return `<fieldset class="field" style="border:0;padding:0;margin:18px 0;">
+    <legend class="q" style="font-size:15px;font-weight:600;margin-bottom:8px;line-height:1.4;padding:0;">${question}</legend>
+    <div class="scale" style="--n:${n}">${opts}</div>
+    <div class="scale-ends"><span>${lowLabel}</span><span>${highLabel}</span></div>
+  </fieldset>`;
+}
+function radioValue(name) { const el = card.querySelector(`input[name="${name}"]:checked`); return el ? Number(el.value) : null; }
+function textValue(id) { const el = card.querySelector("#" + id); return el ? el.value.trim().slice(0, 2000) : ""; }
+
+function stepConsent() {
+  showCard(`
+    <p class="eyebrow">Yoga Macht Stark · Usertest</p>
+    <h1>Danke, dass du mitmachst!</h1>
+    <p>Wir entwickeln eine App für zertifizierte Yoga-Präventionskurse, die die Krankenkasse bezuschusst. Du testest heute einen frühen, bewusst schlichten Entwurf in Graustufen. Wir testen die App, nicht dich: Es gibt kein Richtig oder Falsch.</p>
+    <p>Dauer: etwa 15 Minuten. Du bekommst 4 kurze Aufgaben und ein paar Fragen dazu.</p>
+    <h2>Welche Daten wir erfassen</h2>
+    <ul>
+      <li>deine Klicks im Prototyp, die angesehenen Screens und die Zeit pro Aufgabe,</li>
+      <li>deine Antworten auf die Fragen,</li>
+      <li>Gerätetyp, Bildschirmgröße und Browser (keine IP-Adresse, keine Namen).</li>
+    </ul>
+    <p>Die Daten werden unter einer zufälligen Kennung (${state.pid}) gespeichert, nicht mit deinem Namen. Gespeichert wird in einer Google-Tabelle (Google, Server ggf. außerhalb der EU). Verantwortlich: <span class="todo">[NAME / VERANTWORTLICHE:R]</span>. Speicherdauer: <span class="todo">[SPEICHERDAUER, z. B. 12 Monate]</span>. Du kannst jederzeit abbrechen und die Löschung deiner Daten verlangen: <span class="todo">${CONFIG.CONTACT}</span> (Kennung angeben).</p>
+    <p class="note">Bitte gib während des Tests keine echten persönlichen Daten oder Gesundheitsdaten ein. Alle Eingabefelder im Prototyp sind nur Attrappen.</p>
+    <label class="check"><input type="checkbox" id="c_age"> <span>Ich bin mindestens 18 Jahre alt und nehme freiwillig teil.</span></label>
+    <label class="check"><input type="checkbox" id="c_data"> <span>Ich willige ein, dass meine Klicks, Zeiten und Antworten wie oben beschrieben pseudonymisiert gespeichert und für die Weiterentwicklung der App ausgewertet werden.</span></label>
+    ${MODERATED ? `<label class="check"><input type="checkbox" id="c_rec"> <span>Ich bin einverstanden, dass die Sitzung (Bildschirm und Ton) aufgezeichnet wird. <span class="hint">(optional)</span></span></label>` : ""}
+    <div class="error" id="err" role="alert"></div>
+    <div class="actions"><button class="btn" id="next" type="button">Weiter</button></div>
+  `);
+  card.querySelector("#next").onclick = () => {
+    if (!card.querySelector("#c_age").checked || !card.querySelector("#c_data").checked) {
+      card.querySelector("#err").textContent = "Bitte bestätige beide Punkte, um fortzufahren.";
+      return;
+    }
+    state.session.consent_data = true;
+    state.session.consent_at = iso();
+    if (MODERATED) state.session.consent_recording = card.querySelector("#c_rec").checked;
+    send("session", [sessionRow("consented")]);
+    stepScreener();
+  };
+}
+
+function stepScreener() {
+  showCard(`
+    <p class="eyebrow">Kurz zu dir</p>
+    <h1>Vier kurze Fragen vorab</h1>
+    <div class="field"><label for="s_alter">Wie alt bist du?</label>
+      <select id="s_alter"><option value="">Bitte wählen</option><option>18–29</option><option>30–39</option><option>40–49</option><option>50–59</option><option>60+</option><option>Keine Angabe</option></select></div>
+    <div class="field"><label for="s_yoga">Wie viel Yoga-Erfahrung hast du?</label>
+      <select id="s_yoga"><option value="">Bitte wählen</option><option>Keine</option><option>Ein paarmal ausprobiert</option><option>Gelegentlich</option><option>Regelmäßig (mind. 1× pro Woche)</option></select></div>
+    <div class="field"><label for="s_zpp">Hast du schon einmal einen Präventionskurs gemacht, den die Krankenkasse bezuschusst hat?</label>
+      <select id="s_zpp"><option value="">Bitte wählen</option><option>Ja</option><option>Nein</option><option>Weiß nicht</option></select></div>
+    <div class="field"><label for="s_app">Nutzt du aktuell eine Fitness-, Yoga- oder Meditations-App?</label>
+      <select id="s_app"><option value="">Bitte wählen</option><option>Ja, regelmäßig</option><option>Ja, selten</option><option>Nein</option></select></div>
+    <div class="error" id="err" role="alert"></div>
+    <div class="actions"><button class="btn" id="next" type="button">Weiter</button></div>
+  `);
+  card.querySelector("#next").onclick = () => {
+    const v = { screener_alter: textValue("s_alter"), screener_yoga: textValue("s_yoga"), screener_zpp: textValue("s_zpp"), screener_app: textValue("s_app") };
+    if (Object.values(v).some(x => !x)) { card.querySelector("#err").textContent = "Bitte beantworte alle vier Fragen."; return; }
+    Object.assign(state.session, v);
+    send("session", [sessionRow("screener_done")]);
+    stepIntro();
+  };
+}
+
+function stepIntro() {
+  showCard(`
+    <p class="eyebrow">So funktioniert's</p>
+    <h1>Stell dir diese Situation vor</h1>
+    <div class="persona"><p>Du bist <b>Alex</b>, arbeitest viel am Schreibtisch, bist gesetzlich versichert bei der <b>TK</b> und fühlst dich oft gestresst. Du überlegst, einen Online-Yogakurs zu machen, den die Krankenkasse bezuschusst.</p></div>
+    <p>Links bzw. oben siehst du gleich jeweils eine Aufgabe, daneben den App-Entwurf. Klick dich so durch, wie du es in einer echten App tun würdest.</p>
+    <ul>
+      <li>Nicht alles im Entwurf ist klickbar. Das ist normal.</li>
+      <li>Wenn du nicht weiterkommst, klick auf „Ich komme nicht weiter“. Das hilft uns genauso sehr.</li>
+      <li>Nach jeder Aufgabe folgen 1–2 kurze Fragen.</li>
+      ${MODERATED ? "<li><b>Bitte denk laut:</b> Sag einfach, was du siehst, suchst und erwartest.</li>" : ""}
+    </ul>
+    <div class="actions"><button class="btn" id="next" type="button">Zur ersten Aufgabe</button></div>
+  `);
+  card.querySelector("#next").onclick = () => nextTask();
+}
+
+/* ---------- Aufgaben ---------- */
+function nextTask() {
+  state.taskIndex++;
+  if (state.taskIndex >= TASKS.length) return stepFinal();
+  const t = TASKS[state.taskIndex];
+  showCard(`
+    <div class="progress">Aufgabe ${state.taskIndex + 1} von ${TASKS.length}</div>
+    <p class="eyebrow">Aufgabe ${state.taskIndex + 1}</p>
+    <h1>${t.title}</h1>
+    <div class="persona"><p>${t.text}</p></div>
+    <p class="note">Die Aufgabe bleibt während des Tests sichtbar. Die Zeit läuft erst, wenn du auf „Aufgabe starten“ klickst.</p>
+    <div class="actions"><button class="btn" id="next" type="button">Aufgabe starten</button></div>
+  `);
+  card.querySelector("#next").onclick = () => startTask(t);
+}
+
+let softTimer = null;
+function startTask(t) {
+  state.current = {
+    def: t, startMs: now(), startedAt: iso(),
+    path: [t.start], clicks: 0, navClicks: 0, deadClicks: 0, backClicks: 0,
+    firstClick: null, ended: false
+  };
+  page.classList.add("hidden");
+  run.classList.remove("hidden");
+  document.getElementById("task-eyebrow").textContent = `Aufgabe ${state.taskIndex + 1} von ${TASKS.length}`;
+  document.getElementById("task-title").textContent = t.title;
+  document.getElementById("task-text").textContent = t.text;
+  document.getElementById("btn-done").classList.toggle("hidden", t.targets.length > 0);
+  document.getElementById("btn-giveup").classList.toggle("hidden", t.targets.length === 0);
+  const hint = document.getElementById("soft-hint");
+  hint.classList.add("hidden");
+  document.getElementById("toast").classList.remove("show");
+  clearTimeout(softTimer);
+  if (t.id === "explore") {
+    softTimer = setTimeout(() => {
+      hint.textContent = "Du hast schon einiges gesehen. Du kannst gern weiterschauen oder auf „Ich bin fertig“ klicken.";
+      hint.classList.remove("hidden");
+    }, CONFIG.EXPLORE_SOFT_LIMIT_SEC * 1000);
+  }
+  // Mobil startet die Aufgabe eingeklappt (sie wurde gerade auf der Karte gelesen), damit der Prototyp Platz hat.
+  const collapse = window.innerWidth < 760;
+  document.getElementById("taskbar").classList.toggle("collapsed", collapse);
+  document.getElementById("toggle-task").textContent = collapse ? "Aufgabe anzeigen" : "Aufgabe ausblenden";
+  document.getElementById("stage").scrollTop = 0;
+  showScreen(t.start);
+  logEvent("task_start", { screen: t.start });
+  fitPhone();
+}
+
+function showScreen(id) {
+  const next = document.querySelector(`#phone .screen[data-screen="${id}"]`);
+  if (!next) return false;
+  document.querySelectorAll("#phone .screen.active").forEach(s => s.classList.remove("active"));
+  next.classList.add("active");
+  next.querySelectorAll("*").forEach(el => { if (el.scrollTop) el.scrollTop = 0; });
+  const st = document.getElementById("stage"); if (st) st.scrollTop = 0;
+  state.screen = id;
+  return true;
+}
+
+function logEvent(type, extra) {
+  const c = state.current;
+  state.events.push(Object.assign({
+    pid: state.pid, task: c ? c.def.id : "", t_ms: now(), task_t_ms: c ? now() - c.startMs : "",
+    at: iso(), type, screen: state.screen || ""
+  }, extra || {}));
+}
+
+function labelOf(el) {
+  if (!el) return "";
+  const aria = el.getAttribute && el.getAttribute("aria-label");
+  const txt = (aria || el.textContent || "").replace(/\s+/g, " ").trim();
+  return txt.slice(0, 60);
+}
+
+let toastTimer = null;
+function toast() {
+  const el = document.getElementById("toast");
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 1200);
+}
+
+document.getElementById("phone").addEventListener("click", ev => {
+  const c = state.current;
+  const a = ev.target.closest("a");
+  if (a) ev.preventDefault();
+  if (!c || c.ended || c.reached) return;
+  const phone = document.getElementById("phone");
+  const rect = phone.getBoundingClientRect();
+  const s = rect.width / 390;
+  const x = Math.round((ev.clientX - rect.left) / s), y = Math.round((ev.clientY - rect.top) / s);
+  c.clicks++;
+  const go = a && a.getAttribute("data-go");
+  let target = a || ev.target.closest("div,span,p,h1,header,label") || ev.target;
+  const label = labelOf(target);
+  const isBack = !!go && /^‹$/.test(label);
+  const kind = go ? "nav" : "dead_click";
+  if (!c.firstClick) {
+    c.firstClick = { label, screen: state.screen, to: go || "", ms: now() - c.startMs };
+  }
+  const from = state.screen;
+  if (go) {
+    c.navClicks++;
+    if (isBack) c.backClicks++;
+    showScreen(go);
+    c.path.push(go);
+    logEvent(kind, { from, to: go, label, x, y, is_back: isBack });
+    if (c.def.targets.indexOf(go) >= 0) {
+      c.reached = true;
+      setTimeout(() => endTask(c.navClicks <= c.def.optimalClicks ? "success_direct" : "success_indirect"), 500);
+    }
+  } else {
+    c.deadClicks++;
+    logEvent(kind, { from, to: "", label, x, y, is_back: false });
+    toast();
+  }
+});
+
+document.getElementById("btn-done").onclick = () => { if (!(state.current && state.current.reached)) endTask("done"); };
+document.getElementById("btn-giveup").onclick = () => { if (!(state.current && state.current.reached)) endTask("gave_up"); };
+document.getElementById("toggle-task").onclick = () => {
+  const bar = document.getElementById("taskbar");
+  bar.classList.toggle("collapsed");
+  document.getElementById("toggle-task").textContent = bar.classList.contains("collapsed") ? "Aufgabe anzeigen" : "Aufgabe ausblenden";
+  fitPhone();
+};
+
+function endTask(outcome) {
+  const c = state.current;
+  if (!c || c.ended) return;
+  c.ended = true;
+  clearTimeout(softTimer);
+  logEvent("task_end", { outcome });
+  const t = c.def;
+  const unique = Array.from(new Set(c.path));
+  c.result = {
+    pid: state.pid, task_no: state.taskIndex + 1, task: t.id, outcome,
+    success: outcome.indexOf("success") === 0 ? 1 : (t.targets.length ? 0 : ""),
+    duration_s: Math.round((now() - c.startMs) / 100) / 10,
+    clicks_total: c.clicks, nav_clicks: c.navClicks, dead_clicks: c.deadClicks, back_clicks: c.backClicks,
+    optimal_clicks: t.optimalClicks === null ? "" : t.optimalClicks,
+    screens_visited: c.path.length, unique_screens: unique.length,
+    path: c.path.join(" > "),
+    first_click_label: c.firstClick ? c.firstClick.label : "",
+    first_click_screen_to: c.firstClick ? c.firstClick.to : "",
+    first_click_correct: t.correctFirst.length ? (c.firstClick && t.correctFirst.indexOf(c.firstClick.to) >= 0 ? 1 : 0) : "",
+    time_to_first_click_s: c.firstClick ? Math.round(c.firstClick.ms / 100) / 10 : "",
+    started_at: c.startedAt, ended_at: iso()
+  };
+  stepPostTask(t, outcome);
+}
+
+function stepPostTask(t, outcome) {
+  const msg = outcome.indexOf("success") === 0 ? "Aufgabe erledigt."
+    : outcome === "gave_up" ? "Kein Problem, genau das hilft uns weiter."
+    : "Danke für deinen Rundgang.";
+  showCard(`
+    <div class="progress">Aufgabe ${state.taskIndex + 1} von ${TASKS.length}</div>
+    <p class="eyebrow">${t.title}</p>
+    <h1>${msg}</h1>
+    ${scaleField("seq", "Wie leicht oder schwer war diese Aufgabe insgesamt?", 7, "1 = sehr schwer", "7 = sehr leicht")}
+    ${t.followups.map(f => `<div class="field"><label for="${f.id}">${f.label} <span class="hint">(optional)</span></label><textarea id="${f.id}"></textarea></div>`).join("")}
+    <div class="error" id="err" role="alert"></div>
+    <div class="actions"><button class="btn" id="next" type="button">Weiter</button></div>
+  `);
+  card.querySelector("#next").onclick = () => {
+    const seq = radioValue("seq");
+    if (!seq) { card.querySelector("#err").textContent = "Bitte wähle einen Wert von 1 bis 7."; return; }
+    const r = state.current.result;
+    r.seq = seq;
+    t.followups.forEach(f => r[f.id] = textValue(f.id));
+    state.tasks.push(r);
+    const evs = state.events.filter(e => e.task === t.id);
+    send("task", [r]);
+    send("events", evs);
+    send("session", [sessionRow("task_" + (state.taskIndex + 1) + "_done")]);
+    state.current = null;
+    nextTask();
+  };
+}
+
+function stepFinal() {
+  showCard(`
+    <p class="eyebrow">Fast geschafft</p>
+    <h1>Zum Schluss: dein Gesamteindruck</h1>
+    ${scaleField("umux1", "Die Funktionen dieser App würden zu meinen Bedürfnissen passen.", 7, "1 = stimme gar nicht zu", "7 = stimme voll zu")}
+    ${scaleField("umux2", "Die App ist einfach zu bedienen.", 7, "1 = stimme gar nicht zu", "7 = stimme voll zu")}
+    ${scaleField("abo", "Stell dir vor, du hast den Kurs abgeschlossen. Wie wahrscheinlich würdest du das Mini-Abo für 9,90 € im Monat abschließen?", 5, "1 = sehr unwahrscheinlich", "5 = sehr wahrscheinlich")}
+    <div class="field"><label for="o_irritiert">Was hat dich am meisten irritiert oder gestört? <span class="hint">(optional)</span></label><textarea id="o_irritiert"></textarea></div>
+    <div class="field"><label for="o_gefallen">Was hat dir gefallen? <span class="hint">(optional)</span></label><textarea id="o_gefallen"></textarea></div>
+    <div class="field"><label for="o_fehlt">Was fehlt dir, damit du so einen Kurs wirklich buchen würdest? <span class="hint">(optional)</span></label><textarea id="o_fehlt"></textarea></div>
+    <div class="error" id="err" role="alert"></div>
+    <div class="actions"><button class="btn" id="next" type="button">Absenden</button></div>
+  `);
+  card.querySelector("#next").onclick = async () => {
+    const u1 = radioValue("umux1"), u2 = radioValue("umux2"), abo = radioValue("abo");
+    if (!u1 || !u2 || !abo) { card.querySelector("#err").textContent = "Bitte beantworte die drei Skalenfragen."; return; }
+    card.querySelector("#next").disabled = true;
+    Object.assign(state.session, {
+      umux_lite_1: u1, umux_lite_2: u2,
+      umux_lite_score: Math.round(((u1 - 1) + (u2 - 1)) / 12 * 1000) / 10,
+      abo_wahrscheinlichkeit: abo,
+      offen_irritiert: textValue("o_irritiert"), offen_gefallen: textValue("o_gefallen"), offen_fehlt: textValue("o_fehlt"),
+      tasks_success: state.tasks.filter(r => r.success === 1).length,
+      total_duration_s: Math.round(now() / 1000),
+      finished_at: iso()
+    });
+    await send("session", [sessionRow("completed")]);
+    stepDone();
+  };
+}
+
+function stepDone() {
+  const needDownload = state.sendFailed || DEBUG;
+  showCard(`
+    <p class="eyebrow">Fertig</p>
+    <h1>Vielen Dank!</h1>
+    <p>Deine Antworten helfen uns sehr, die App verständlicher zu machen. Du kannst das Fenster jetzt schließen.</p>
+    <p class="note">Deine Kennung: <b>${state.pid}</b>. Falls du deine Daten löschen lassen möchtest, gib sie bitte an.</p>
+    ${needDownload ? `<div class="persona"><p>${state.sendFailed ? "Die Daten konnten nicht automatisch übertragen werden. Bitte lade die Datei herunter und schick sie an " + CONFIG.CONTACT + "." : "Debug-Modus: Rohdaten herunterladen."}</p></div>
+    <div class="actions"><button class="btn" id="dl" type="button">Daten herunterladen</button></div>` : ""}
+  `);
+  const dl = card.querySelector("#dl");
+  if (dl) dl.onclick = download;
+}
+
+/* ---------- Prototyp einpassen ---------- */
+function fitPhone() {
+  if (run.classList.contains("hidden")) return;
+  const stage = document.getElementById("stage");
+  const cs = getComputedStyle(stage);
+  const availW = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - (window.innerWidth < 760 ? 0 : 24);
+  const availH = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - (window.innerWidth < 760 ? 0 : 24);
+  const mobile = window.innerWidth < 760;
+  // Mobil: volle Breite nutzen, die Bühne scrollt vertikal. Desktop: ganzes Handy sichtbar.
+  const s = mobile ? Math.max(0.3, Math.min(availW / 390, 1.15)) : Math.max(0.3, Math.min(availW / 390, availH / 844, 1.15));
+  const phone = document.getElementById("phone");
+  phone.style.transform = `scale(${s})`;
+  const wrap = document.getElementById("phone-wrap");
+  wrap.style.width = (390 * s) + "px";
+  wrap.style.height = (844 * s) + "px";
+}
+window.addEventListener("resize", fitPhone);
+window.addEventListener("orientationchange", () => setTimeout(fitPhone, 200));
+
+/* Beim Verlassen während einer Aufgabe: Zwischenstand sichern */
+window.addEventListener("pagehide", () => {
+  backup();
+  if (state.current && !state.current.ended && CONFIG.ENDPOINT && navigator.sendBeacon) {
+    try {
+      navigator.sendBeacon(CONFIG.ENDPOINT, new Blob([JSON.stringify({ study: CONFIG.STUDY_ID, kind: "session", rows: [sessionRow("abandoned_in_task_" + (state.taskIndex + 1))] })], { type: "text/plain;charset=utf-8" }));
+    } catch (e) {}
+  }
+});
+
+stepConsent();
+</script>
+</body>
+</html>
