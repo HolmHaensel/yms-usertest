@@ -856,9 +856,9 @@
 const CONFIG = {
   STUDY_ID: "yms-wireframe-usertest-v1",
   // Web-App-URL des Google Apps Scripts (siehe apps-script.gs). Leer = Daten nur lokal + Download am Ende.
-  ENDPOINT: "",
+  ENDPOINT: "https://script.google.com/macros/s/AKfycbz42wwUtkabF4Ocmkk9tQ4vq1fwV6x1H3YiX7qQuTSe1paFyW6l0Q7SjCc94acRzvAv/exec",
   EXPLORE_SOFT_LIMIT_SEC: 180,
-  CONTACT: "[KONTAKT-E-MAIL]"
+  CONTACT: "holmhansel@gmail.com"
 };
 
 const TASKS = [
@@ -1018,7 +1018,7 @@ function stepConsent() {
       <li>deine Antworten auf die Fragen,</li>
       <li>Gerätetyp, Bildschirmgröße und Browser (keine IP-Adresse, keine Namen).</li>
     </ul>
-    <p>Die Daten werden unter einer zufälligen Kennung (${state.pid}) gespeichert, nicht mit deinem Namen. Gespeichert wird in einer Google-Tabelle (Google, Server ggf. außerhalb der EU). Verantwortlich: <span class="todo">[NAME / VERANTWORTLICHE:R]</span>. Speicherdauer: <span class="todo">[SPEICHERDAUER, z. B. 12 Monate]</span>. Du kannst jederzeit abbrechen und die Löschung deiner Daten verlangen: <span class="todo">${CONFIG.CONTACT}</span> (Kennung angeben).</p>
+    <p>Die Daten werden unter einer zufälligen Kennung (${state.pid}) gespeichert, nicht mit deinem Namen. Gespeichert wird in einer Google-Tabelle (Google, Server ggf. außerhalb der EU) und die Seite ist auf GitHub Pages gehostet (GitHub, USA) — beim Aufruf werden dort technisch bedingt IP-Adressen verarbeitet. Verantwortlich: Holm Hänsel, YOGA MACHT STARK. Speicherdauer: 12 Monate nach Abschluss dieser Studie, danach werden die Daten gelöscht. Du kannst jederzeit abbrechen und die Löschung deiner Daten verlangen: <a href="mailto:${CONFIG.CONTACT}">${CONFIG.CONTACT}</a> (bitte deine Kennung angeben).</p>
     <p class="note">Bitte gib während des Tests keine echten persönlichen Daten oder Gesundheitsdaten ein. Alle Eingabefelder im Prototyp sind nur Attrappen.</p>
     <label class="check"><input type="checkbox" id="c_age"> <span>Ich bin mindestens 18 Jahre alt und nehme freiwillig teil.</span></label>
     <label class="check"><input type="checkbox" id="c_data"> <span>Ich willige ein, dass meine Klicks, Zeiten und Antworten wie oben beschrieben pseudonymisiert gespeichert und für die Weiterentwicklung der App ausgewertet werden.</span></label>
