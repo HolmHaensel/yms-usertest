@@ -1042,9 +1042,11 @@ function stepConsent() {
 function stepScreener() {
   showCard(`
     <p class="eyebrow">Kurz zu dir</p>
-    <h1>Vier kurze Fragen vorab</h1>
+    <h1>Fünf kurze Fragen vorab</h1>
     <div class="field"><label for="s_alter">Wie alt bist du?</label>
       <select id="s_alter"><option value="">Bitte wählen</option><option>18–29</option><option>30–39</option><option>40–49</option><option>50–59</option><option>60+</option><option>Keine Angabe</option></select></div>
+    <div class="field"><label for="s_geschlecht">Welches Geschlecht hast du?</label>
+      <select id="s_geschlecht"><option value="">Bitte wählen</option><option>Weiblich</option><option>Männlich</option><option>Divers</option><option>Keine Angabe</option></select></div>
     <div class="field"><label for="s_yoga">Wie viel Yoga-Erfahrung hast du?</label>
       <select id="s_yoga"><option value="">Bitte wählen</option><option>Keine</option><option>Ein paarmal ausprobiert</option><option>Gelegentlich</option><option>Regelmäßig (mind. 1× pro Woche)</option></select></div>
     <div class="field"><label for="s_zpp">Hast du schon einmal einen Präventionskurs gemacht, den die Krankenkasse bezuschusst hat?</label>
@@ -1055,8 +1057,8 @@ function stepScreener() {
     <div class="actions"><button class="btn" id="next" type="button">Weiter</button></div>
   `);
   card.querySelector("#next").onclick = () => {
-    const v = { screener_alter: textValue("s_alter"), screener_yoga: textValue("s_yoga"), screener_zpp: textValue("s_zpp"), screener_app: textValue("s_app") };
-    if (Object.values(v).some(x => !x)) { card.querySelector("#err").textContent = "Bitte beantworte alle vier Fragen."; return; }
+    const v = { screener_alter: textValue("s_alter"), screener_geschlecht: textValue("s_geschlecht"), screener_yoga: textValue("s_yoga"), screener_zpp: textValue("s_zpp"), screener_app: textValue("s_app") };
+    if (Object.values(v).some(x => !x)) { card.querySelector("#err").textContent = "Bitte beantworte alle fünf Fragen."; return; }
     Object.assign(state.session, v);
     send("session", [sessionRow("screener_done")]);
     stepIntro();
